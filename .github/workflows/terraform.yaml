@@ -6,18 +6,41 @@ on:
   pull_request:
 
 jobs:
-  terraform:
-    name: "Terraform"
+  # --- JOB 1: THE PLAN (No Approval Needed) ---
+  plan:
+    name: "Terraform Plan"
     runs-on: self-hosted
-    # This links the job to the environment we just protected
-    environment: production 
+    env:
+      TF_VAR_proxmox_api_url: ${{ secrets.PM_API_URL }}
+      TF_VAR_proxmox_api_token_id: ${{ secrets.PM_API_TOKEN_ID }}
+      TF_VAR_proxmox_api_token_secret: ${{ secrets.PM_API_TOKEN_SECRET }}
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Terraform Init
+        working-directory: live/team-alpha
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: live/team-alpha
+        run: terraform plan -no-color
+
+  # --- JOB 2: THE APPLY (Requires Approval) ---
+  apply:
+    name: "Terraform Apply"
+    needs: plan # Only runs if Plan finishes successfully
+    runs-on: self-hosted
+    environment: production # The "Approve" button triggers HERE
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     env:
       TF_VAR_proxmox_api_url: ${{ secrets.PM_API_URL }}
       TF_VAR_proxmox_api_token_id: ${{ secrets.PM_API_TOKEN_ID }}
       TF_VAR_proxmox_api_token_secret: ${{ secrets.PM_API_TOKEN_SECRET }}
-      TF_VAR_proxmox_user: ${{ secrets.PM_USER }}
-      TF_VAR_proxmox_password: ${{ secrets.PM_PASSWORD }}
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
     steps:
       - name: Checkout
@@ -25,24 +48,8 @@ jobs:
 
       - name: Terraform Init
         working-directory: live/team-alpha
-        env:
-          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
         run: terraform init
 
-      - name: Terraform Plan
-        run: terraform plan -no-color
-        working-directory: live/team-alpha
-
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve
         working-directory: live/team-alpha
-      
-      - name: Debug Secret Connection
-        run: |
-          if [ -z "$TF_VAR_proxmox_api_url" ]; then
-            echo "❌ ERROR: TF_VAR_proxmox_api_url is empty. Check GitHub Secrets."
-            exit 1
-          else
-            echo "✅ SUCCESS: Secret is loaded."
-          fi
+        run: terraform apply -auto-approve
