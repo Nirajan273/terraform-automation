@@ -29,7 +29,7 @@ provider "proxmox" {
 module "nirajan_infra" {
   source = "../../modules/proxmox_vm"
 
-  team_name      = "Nirajan"
+  team_name      = "nirajan"
   vm_count       = 2
   starting_vmid  = 500
   docker_image   = "nginx:latest"
