@@ -28,7 +28,7 @@ module "alpha_infra" {
   source = "../../modules/proxmox_vm"
 
   team_name      = "alpha"
-  vm_count       = 0
+  vm_count       = 3
   starting_vmid  = 400
   docker_image   = "nginx:latest"
   
