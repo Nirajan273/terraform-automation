@@ -7,6 +7,7 @@ resource "proxmox_vm_qemu" "ubuntu_server" {
   clone       = "ubuntu-jammy-template"
   full_clone  = true
 
+
   # Hardware Settings
   scsihw   = "virtio-scsi-pci"
   boot     = "order=scsi0"

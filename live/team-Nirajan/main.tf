@@ -29,9 +29,9 @@ provider "proxmox" {
 module "alpha_infra" {
   source = "../../modules/proxmox_vm"
 
-  team_name      = "alpha"
+  team_name      = "Nirajan"
   vm_count       = 2
-  starting_vmid  = 400
+  starting_vmid  = 500
   docker_image   = "nginx:latest"
   
   # These refer to variables we'll set in the .tfvars file

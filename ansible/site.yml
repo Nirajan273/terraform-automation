@@ -1,7 +1,7 @@
 ---
 - name: Deploy Docker for the Team
   hosts: all
-  become: yes  # This triggers the "become" logic
+  become: yes
   tasks:
     - name: Update apt cache
       apt:
@@ -22,12 +22,9 @@
 
     - name: Start the Container
       docker_container:
-        name: "{{ docker_image }}"
+        name: team-app
         image: "{{ docker_image }}"
         state: started
         restart_policy: always
         published_ports:
-          - "9200:9200"
-          - "9300:9300"
-      env:
-      discovery.type: "single-node"
+          - "80:80"
