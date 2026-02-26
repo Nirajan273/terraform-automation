@@ -35,3 +35,12 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve
         working-directory: live/team-alpha
+      
+      - name: Debug Secret Connection
+        run: |
+          if [ -z "$TF_VAR_proxmox_api_url" ]; then
+            echo "❌ ERROR: TF_VAR_proxmox_api_url is empty. Check GitHub Secrets."
+            exit 1
+          else
+            echo "✅ SUCCESS: Secret is loaded."
+          fi
