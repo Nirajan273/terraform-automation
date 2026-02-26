@@ -7,25 +7,38 @@ on:
       - "live/**"
 
 jobs:
+  # --- JOB 0: THE DETECTOR ---
   detect-changes:
-      runs-on: ubuntu-latest
-      outputs:
-        folders: ${{ steps.filter.outputs.all_changed_files }}
-      steps:
-        - uses: actions/checkout@v4
-          with:
-            fetch-depth: 0 # Needed to detect changes accurately
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-        - name: Get changed folders
-          id: filter
-          # This magic step finds unique directories under 'live/' that changed
-          run: |
-            CHANGES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^live/' | xargs -I {} dirname {} | sort -u | jq -R -s -c 'split("\n")[:-1]')
-            echo "all_changed_files=$CHANGES" >> $GITHUB_OUTPUT
+      - id: set-matrix
+        run: |
+          # Finds all unique directories under 'live/' that contain .tf files and have changed
+          # We use a more robust check to ensure we only target folders with actual terraform files
+          FOLDERS=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^live/' | xargs -I {} dirname {} | sort -u)
+          VALID_FOLDERS=""
+          for f in $FOLDERS; do
+            if [ -d "$f" ] && ls $f/*.tf >/dev/null 2>&1; then
+              VALID_FOLDERS="$VALID_FOLDERS \"$f\","
+            fi
+          done
+          echo "matrix=[${VALID_FOLDERS%,}]" >> $GITHUB_OUTPUT
 
-  # --- JOB 1: THE PLAN (No Approval Needed) ---
+  # --- JOB 1: THE PLAN ---
   plan:
-    name: "Terraform Plan"
+    name: "Plan: ${{ matrix.folder }}"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.matrix != '[]'
+    strategy:
+      matrix:
+        folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+      fail-fast: false # Keep planning other folders even if one fails
     runs-on: self-hosted
     env:
       TF_VAR_proxmox_api_url: ${{ secrets.PM_API_URL }}
@@ -45,15 +58,25 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ${{ matrix.folder }}
-        run: terraform plan -no-color
+        run: terraform plan -no-color -out=tfplan
+
+      # We save the plan so the 'Apply' job uses the exact same data
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ strategy.job-index }}
+          path: ${{ matrix.folder }}/tfplan
 
   # --- JOB 2: THE APPLY (Requires Approval) ---
   apply:
-    name: "Terraform Apply"
-    needs: plan # Only runs if Plan finishes successfully
+    name: "Apply: ${{ matrix.folder }}"
+    needs: [detect-changes, plan]
+    strategy:
+      matrix:
+        folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     runs-on: self-hosted
-    environment: production # The "Approve" button triggers HERE
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production # Requires manual approval in GitHub Settings
+    if: github.ref == 'refs/heads/main'
     
     env:
       TF_VAR_proxmox_api_url: ${{ secrets.PM_API_URL }}
@@ -67,10 +90,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ strategy.job-index }}
+          path: ${{ matrix.folder }}
+
       - name: Terraform Init
         working-directory: ${{ matrix.folder }}
         run: terraform init
 
       - name: Terraform Apply
         working-directory: ${{ matrix.folder }}
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve tfplan
