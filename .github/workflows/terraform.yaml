@@ -1,0 +1,37 @@
+name: "Proxmox GitOps"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: self-hosted
+    # This links the job to the environment we just protected
+    environment: production 
+    
+    env:
+      TF_VAR_proxmox_api_url: ${{ secrets.PM_API_URL }}
+      TF_VAR_proxmox_api_token_id: ${{ secrets.PM_API_TOKEN_ID }}
+      TF_VAR_proxmox_api_token_secret: ${{ secrets.PM_API_TOKEN_SECRET }}
+      TF_VAR_proxmox_user: ${{ secrets.PM_USER }}
+      TF_VAR_proxmox_password: ${{ secrets.PM_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: live/team-alpha
+
+      - name: Terraform Plan
+        run: terraform plan -no-color
+        working-directory: live/team-alpha
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve
+        working-directory: live/team-alpha

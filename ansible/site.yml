@@ -1,0 +1,30 @@
+---
+- name: Deploy Docker for the Team
+  hosts: all
+  become: yes  # This triggers the "become" logic
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install Docker
+      apt:
+        name: 
+          - docker.io
+          - python3-pip
+        state: present
+
+    - name: Pull the Team's Docker Image
+      docker_image:
+        name: "{{ docker_image }}"
+        source: pull
+
+    - name: Start the Container
+      docker_container:
+        name: team-app
+        image: "{{ docker_image }}"
+        state: started
+        restart_policy: always
+        published_ports:
+          - "80:80"
