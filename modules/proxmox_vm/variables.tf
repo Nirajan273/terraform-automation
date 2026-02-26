@@ -35,7 +35,7 @@ variable "docker_image" {
 
 variable "memory_mb" {
   type    = number
-  default = 2048
+  default = 4096
 }
 
 variable "cpu_cores" {
@@ -45,5 +45,5 @@ variable "cpu_cores" {
 
 variable "disk_size" {
   type    = string
-  default = "10G"
+  default = "15G"
 }

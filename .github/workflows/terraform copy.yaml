@@ -3,26 +3,9 @@ name: "Proxmox GitOps"
 on:
   push:
     branches: [ main ]
-    paths:
-      - "live/**"
+  pull_request:
 
 jobs:
-  detect-changes:
-      runs-on: ubuntu-latest
-      outputs:
-        folders: ${{ steps.filter.outputs.all_changed_files }}
-      steps:
-        - uses: actions/checkout@v4
-          with:
-            fetch-depth: 0 # Needed to detect changes accurately
-
-        - name: Get changed folders
-          id: filter
-          # This magic step finds unique directories under 'live/' that changed
-          run: |
-            CHANGES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^live/' | xargs -I {} dirname {} | sort -u | jq -R -s -c 'split("\n")[:-1]')
-            echo "all_changed_files=$CHANGES" >> $GITHUB_OUTPUT
-
   # --- JOB 1: THE PLAN (No Approval Needed) ---
   plan:
     name: "Terraform Plan"
@@ -40,11 +23,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Terraform Init
-        working-directory: ${{ matrix.folder }}
+        working-directory: live/team-alpha
         run: terraform init
 
       - name: Terraform Plan
-        working-directory: ${{ matrix.folder }}
+        working-directory: live/team-alpha
         run: terraform plan -no-color
 
   # --- JOB 2: THE APPLY (Requires Approval) ---
@@ -68,9 +51,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Terraform Init
-        working-directory: ${{ matrix.folder }}
+        working-directory: live/team-alpha
         run: terraform init
 
       - name: Terraform Apply
-        working-directory: ${{ matrix.folder }}
+        working-directory: live/team-alpha
         run: terraform apply -auto-approve

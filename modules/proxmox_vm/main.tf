@@ -21,15 +21,15 @@ resource "proxmox_vm_qemu" "ubuntu_server" {
 
   # Disk Configuration (Note: slot must be a number)
   disk {
-    slot    = "scsi0"             # 0 corresponds to scsi0
+    slot    = "scsi0"           
     size    = var.disk_size
-    type    = "disk"        # Change type to 'scsi' for the main drive
+    type    = "disk"      
     storage = "local-lvm"
   }
 
   # Cloud-Init Drive
   disk {
-    slot    = "ide1"            # 1 corresponds to ide1
+    slot    = "ide1"         
     type    = "cloudinit"
     storage = "local-lvm"
     size    = "1M"

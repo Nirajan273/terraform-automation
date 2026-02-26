@@ -26,7 +26,7 @@ provider "proxmox" {
 }
 
 # The Module Call
-module "alpha_infra" {
+module "nirajan_infra" {
   source = "../../modules/proxmox_vm"
 
   team_name      = "Nirajan"
