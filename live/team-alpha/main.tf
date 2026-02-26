@@ -30,7 +30,7 @@ module "alpha_infra" {
   team_name      = "alpha"
   vm_count       = 3
   starting_vmid  = 400
-  docker_image   = "nginx:latest"
+  docker_image   = "docker.elastic.co/elasticsearch/elasticsearch:9.3.0"
   
   # These refer to variables we'll set in the .tfvars file
   admin_user     = var.proxmox_user 
