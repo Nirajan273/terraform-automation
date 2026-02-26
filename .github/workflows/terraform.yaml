@@ -47,7 +47,7 @@ jobs:
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
       TF_VAR_proxmox_user: ${{ secrets.PM_USER }}
       TF_VAR_proxmox_password: ${{ secrets.PM_PASSWORD }}
-#tst
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
