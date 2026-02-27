@@ -6,100 +6,99 @@ on:
     paths:
       - "live/**"
 
+env:
+  TF_VAR_proxmox_api_url: ${{ secrets.PM_API_URL }}
+  TF_VAR_proxmox_api_token_id: ${{ secrets.PM_API_TOKEN_ID }}
+  TF_VAR_proxmox_api_token_secret: ${{ secrets.PM_API_TOKEN_SECRET }}
+  TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+  TF_VAR_proxmox_user: ${{ secrets.PM_USER }}
+  TF_VAR_proxmox_password: ${{ secrets.PM_PASSWORD }}
+
 jobs:
-  # --- JOB 0: THE DETECTOR ---
-  detect-changes:
-    runs-on: ubuntu-latest
+  # --- JOB 1: THE PLAN ---
+  plan:
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        # DEFINE YOUR TEAMS HERE
+        include:
+          - team_name: "Nirajan"
+            path: "live/team-Nirajan"
+          - team_name: "Alpha"
+            path: "live/team-alpha"
+    
+    name: "Plan: ${{ matrix.team_name }}"
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      # This maps the plan results so the Apply job knows if it should run
+      should_apply: ${{ steps.check.outputs.changed }}
+    
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - id: set-matrix
+      - id: check
+        name: Check for changes
         run: |
-          # Finds all unique directories under 'live/' that contain .tf files and have changed
-          # We use a more robust check to ensure we only target folders with actual terraform files
-          FOLDERS=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^live/' | xargs -I {} dirname {} | sort -u)
-          VALID_FOLDERS=""
-          for f in $FOLDERS; do
-            if [ -d "$f" ] && ls $f/*.tf >/dev/null 2>&1; then
-              VALID_FOLDERS="$VALID_FOLDERS \"$f\","
-            fi
-          done
-          echo "matrix=[${VALID_FOLDERS%,}]" >> $GITHUB_OUTPUT
+          # Only proceed if files in this specific path changed in this push
+          if git diff --quiet ${{ github.event.before }} ${{ github.event.after }} -- "${{ matrix.path }}"; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes in ${{ matrix.path }}"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in ${{ matrix.path }}"
+          fi
 
-  # --- JOB 1: THE PLAN ---
-  plan:
-    name: "Plan: ${{ matrix.folder }}"
-    needs: detect-changes
-    if: needs.detect-changes.outputs.matrix != '[]'
-    strategy:
-      matrix:
-        folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
-      fail-fast: false # Keep planning other folders even if one fails
-    runs-on: self-hosted
-    env:
-      TF_VAR_proxmox_api_url: ${{ secrets.PM_API_URL }}
-      TF_VAR_proxmox_api_token_id: ${{ secrets.PM_API_TOKEN_ID }}
-      TF_VAR_proxmox_api_token_secret: ${{ secrets.PM_API_TOKEN_SECRET }}
-      TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-      TF_VAR_proxmox_user: ${{ secrets.PM_USER }}
-      TF_VAR_proxmox_password: ${{ secrets.PM_PASSWORD }}
+      - name: Terraform Init & Plan
+        if: steps.check.outputs.changed == 'true'
+        working-directory: ${{ matrix.path }}
+        run: |
+          terraform init
+          terraform plan -no-color -out=tfplan
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Terraform Init
-        working-directory: ${{ matrix.folder }}
-        run: terraform init
-
-      - name: Terraform Plan
-        working-directory: ${{ matrix.folder }}
-        run: terraform plan -no-color -out=tfplan
-
-      # We save the plan so the 'Apply' job uses the exact same data
-      - name: Upload Plan Artifact
+      - name: Upload Plan
+        if: steps.check.outputs.changed == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: tfplan-${{ strategy.job-index }}
-          path: ${{ matrix.folder }}/tfplan
+          name: ${{ matrix.team_name }}-tfplan
+          path: ${{ matrix.path }}/tfplan
 
   # --- JOB 2: THE APPLY (Requires Approval) ---
   apply:
-    name: "Apply: ${{ matrix.folder }}"
-    needs: [detect-changes, plan]
+    needs: plan
+    runs-on: self-hosted
     strategy:
       matrix:
-        folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
-    runs-on: self-hosted
-    environment: production # Requires manual approval in GitHub Settings
+        include:
+          - team_name: "Nirajan"
+            path: "live/team-Nirajan"
+          - team_name: "Alpha"
+            path: "live/team-alpha"
+    
+    name: "Apply: ${{ matrix.team_name }}"
+    environment: production # <--- Manual Approval button appears here
+    # Only run if the Plan job detected changes for THIS specific matrix folder
     if: github.ref == 'refs/heads/main'
     
-    env:
-      TF_VAR_proxmox_api_url: ${{ secrets.PM_API_URL }}
-      TF_VAR_proxmox_api_token_id: ${{ secrets.PM_API_TOKEN_ID }}
-      TF_VAR_proxmox_api_token_secret: ${{ secrets.PM_API_TOKEN_SECRET }}
-      TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-      TF_VAR_proxmox_user: ${{ secrets.PM_USER }}
-      TF_VAR_proxmox_password: ${{ secrets.PM_PASSWORD }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Download Plan Artifact
+      - name: Download Plan
         uses: actions/download-artifact@v4
         with:
-          name: tfplan-${{ strategy.job-index }}
-          path: ${{ matrix.folder }}
-
-      - name: Terraform Init
-        working-directory: ${{ matrix.folder }}
-        run: terraform init
+          name: ${{ matrix.team_name }}-tfplan
+          path: ${{ matrix.path }}
+        # This step will fail gracefully if no plan was uploaded (no changes)
+        continue-on-error: true 
 
       - name: Terraform Apply
-        working-directory: ${{ matrix.folder }}
-        run: terraform apply -auto-approve tfplan
+        # Only apply if the plan file actually exists
+        run: |
+          if [ -f "${{ matrix.path }}/tfplan" ]; then
+            cd ${{ matrix.path }}
+            terraform init
+            terraform apply -auto-approve tfplan
+          else
+            echo "No plan file found for ${{ matrix.team_name }}. Skipping."
+          fi
