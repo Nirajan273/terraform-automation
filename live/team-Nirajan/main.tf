@@ -30,7 +30,7 @@ module "nirajan_infra" {
   source = "../../modules/proxmox_vm"
 
   team_name      = "nirajan"
-  vm_count       = 2
+  vm_count       = 3
   starting_vmid  = 500
   docker_image   = "nginx:latest"
   
