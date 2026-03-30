@@ -77,6 +77,8 @@ jobs:
             path: "live/team-Nirajan"
           - team_name: "Alpha"
             path: "live/team-alpha"
+          - team_name: "Cassandra_infra"
+            path: "live/team-cassandra"
     
     name: "Apply: ${{ matrix.team_name }}"
     environment: production # <--- Manual Approval button appears here
