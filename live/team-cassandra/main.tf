@@ -30,7 +30,7 @@ module "nirajan_infra" {
   source = "../../modules/proxmox_vm"
 
   team_name      = "cassandra"
-  vm_count       = 1
+  vm_count       = 2
   starting_vmid  = 600
   docker_image   = "cassandra:latest"
   
