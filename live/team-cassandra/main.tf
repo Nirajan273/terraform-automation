@@ -26,7 +26,7 @@ provider "proxmox" {
 }
 
 # The Module Call
-module "nirajan_infra" {
+module "Cassandra_infra" {
   source = "../../modules/proxmox_vm"
 
   team_name      = "cassandra"
