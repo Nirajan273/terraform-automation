@@ -27,14 +27,23 @@ provider "proxmox" {
 
 # The Module Call
 module "Cassandra_infra" {
-  source = "../../modules/proxmox_vm"
+  source = "../../modules/dp_module"
 
-  team_name      = "cassandra"
-  vm_count       = 2
-  starting_vmid  = 600
+  team_name = "cassandra"
+  vms = {
+    "cassandra-primary" = {
+      vmid      = 601,
+      memory    = 8192,
+      disk_size = "20G"
+    },
+    "cassandra-worker" = {
+      vmid      = 602, # Changed from 601 to 602
+      memory    = 8192,
+      disk_size = "20G"
+    }
+  }
+
   docker_image   = "cassandra:latest"
-  
-  # These refer to variables we'll set in the .tfvars file
   admin_user     = var.proxmox_user 
   admin_password = var.proxmox_password
 }
