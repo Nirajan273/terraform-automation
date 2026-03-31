@@ -32,13 +32,14 @@ module "Cassandra_infra" {
   team_name = "cassandra"
   vms = {
     "cassandra-primary" = {
-      vmid  = 601,
-      memory    = 8192,
+      vmid  = 701,
+      memory    = 4192,
       disk_size = "20G"
     },
+
     "cassandra-worker" = {
-      vmid      = 602, # Changed from 601 to 602
-      memory    = 8192,
+      vmid      = 702, 
+      memory    = 4192,
       disk_size = "20G"
     }
   }
