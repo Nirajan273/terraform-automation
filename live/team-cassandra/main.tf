@@ -31,16 +31,22 @@ module "Cassandra_infra" {
 
   team_name = "cassandra"
   vms = {
-    "cassandra-primary" = {
+    "cassandra-1" = {
       vmid  = 701,
       memory    = 4192,
-      disk_size = "20G"
+      disk_size = "15G"
     },
 
-    "cassandra-worker" = {
+    "cassandra-2" = {
       vmid      = 702, 
       memory    = 4192,
-      disk_size = "20G"
+      disk_size = "15G"
+    }
+
+     "cassandra-3" = {
+      vmid      = 702, 
+      memory    = 4192,
+      disk_size = "15G"
     }
   }
 
