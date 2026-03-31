@@ -1,7 +1,8 @@
 resource "proxmox_vm_qemu" "ubuntu_server" {
-  for_each       = var.vms
+  for_each    = var.vms
   name        = each.key
   target_node = var.target_node
+  memory      = each.value.memory
   vmid        = each.value.vmid
   
   clone       = "ubuntu-jammy-template"
@@ -12,7 +13,7 @@ resource "proxmox_vm_qemu" "ubuntu_server" {
   scsihw   = "virtio-scsi-pci"
   boot     = "order=scsi0"
   agent    = 1 
-  memory   = var.memory_mb
+  # memory   = var.memory_mb
 
   cpu { 
         cores = var.cpu_cores

@@ -3,20 +3,20 @@ variable "team_name" {
   description = "The name of the team (used for VM naming)"
 }
 
-variable "vm_count" {
-  type        = number
-  default     = 1
-}
+# variable "vm_count" {
+#   type        = number
+#   default     = 1
+# }
 
 variable "target_node" {
   type        = string
   default     = "nj" # Change to your Proxmox node name
 }
 
-variable "starting_vmid" {
-  type        = number
-  description = "The first VM ID to use (e.g., 400)"
-}
+# variable "starting_vmid" {
+#   type        = number
+#   description = "The first VM ID to use (e.g., 400)"
+# }
 
 variable "admin_user" {
   type    = string
@@ -47,3 +47,16 @@ variable "disk_size" {
   type    = string
   default = "15G"
 }
+
+variable "vms" {
+  type = map(object({
+    vmid      = number
+    memory    = number
+    disk_size = string
+  }))
+}
+
+# variable "target_node" {
+#   type    = string
+#   default = "nj" # Adjust this to your Proxmox node name
+# }

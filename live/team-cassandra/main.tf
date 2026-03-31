@@ -32,7 +32,7 @@ module "Cassandra_infra" {
   team_name = "cassandra"
   vms = {
     "cassandra-primary" = {
-      vmid      = 601,
+      starting_vmid  = 601,
       memory    = 8192,
       disk_size = "20G"
     },
