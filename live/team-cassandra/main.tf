@@ -44,7 +44,7 @@ module "Cassandra_infra" {
     }
 
      "cassandra-3" = {
-      vmid      = 702, 
+      vmid      = 703, 
       memory    = 4192,
       disk_size = "15G"
     }
