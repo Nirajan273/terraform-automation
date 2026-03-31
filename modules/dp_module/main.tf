@@ -73,13 +73,15 @@ resource "proxmox_vm_qemu" "ubuntu_server" {
 
   # 2. Run Ansible from WSL
   provisioner "local-exec" {
-    command = <<EOT
-      export ANSIBLE_HOST_KEY_CHECKING=False
-      export SSHPASS='${var.admin_password}'
-      ansible-playbook -i ${self.ssh_host}, \
-      -u ${var.admin_user} \
-      --extra-vars "ansible_password=${var.admin_password} ansible_become_password=${var.admin_password} docker_image=${var.docker_image}" \
-      ../../ansible/site.yml
-    EOT
-  }
+      command = <<EOT
+        export ANSIBLE_HOST_KEY_CHECKING=False
+        export SSHPASS='${var.admin_password}'
+        
+        ansible-playbook -i ${self.ssh_host}, \
+        -u ${var.admin_user} \
+        --ssh-common-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
+        --extra-vars "ansible_password=${var.admin_password} ansible_become_password=${var.admin_password} docker_image=${var.docker_image}" \
+        ../../ansible/site.yml
+      EOT
+    }
 }
