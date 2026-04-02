@@ -32,13 +32,13 @@ module "Cassandra_infra" {
   team_name = "cassandra"
   vms = {
     "database" = {
-      vmid  = 701,
+      vmid  = 703,
       memory    = 4192,
       disk_size = "15G"
     },
 
     "frontend" = {
-      vmid      = 702, 
+      vmid      = 704, 
       memory    = 4192,
       disk_size = "15G"
     }
