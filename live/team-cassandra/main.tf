@@ -31,23 +31,18 @@ module "Cassandra_infra" {
 
   team_name = "cassandra"
   vms = {
-    "cassandra-1" = {
+    "database-01" = {
       vmid  = 701,
       memory    = 4192,
       disk_size = "15G"
     },
 
-    "cassandra-2" = {
+    "frontend-01" = {
       vmid      = 702, 
       memory    = 4192,
       disk_size = "15G"
     }
 
-     "cassandra-3" = {
-      vmid      = 703, 
-      memory    = 4192,
-      disk_size = "15G"
-    }
   }
 
   docker_image   = "cassandra:latest"
