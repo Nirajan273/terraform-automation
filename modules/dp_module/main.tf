@@ -81,7 +81,7 @@ resource "proxmox_vm_qemu" "ubuntu_server" {
         -u ${var.admin_user} \
         --ssh-common-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
         --extra-vars "ansible_password=${var.admin_password} ansible_become_password=${var.admin_password} docker_image=${var.docker_image}" \
-        ../../ansible/site.yml
+        ../../ansible/dockerinstall.yml
       EOT
     }
 }
