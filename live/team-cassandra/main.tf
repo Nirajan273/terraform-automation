@@ -41,6 +41,12 @@ module "Cassandra_infra" {
       vmid      = 704, 
       memory    = 4192,
       disk_size = "15G"
+    },
+
+    "CRM-test" ={
+      vmid  = 705,
+      memory = 4192,
+      disk_size= "15G"
     }
 
   }
