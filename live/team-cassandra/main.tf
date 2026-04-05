@@ -27,7 +27,7 @@ provider "proxmox" {
 
 # The Module Call
 module "Cassandra_infra" {
-  source = "../../modules/dp_module"
+  source = "../../modules/nj_module"
 
   team_name = "cassandra"
   vms = {
@@ -46,7 +46,7 @@ module "Cassandra_infra" {
     "CRM-test" ={
       vmid  = 705,
       memory = 4192,
-      disk_size= "15G"
+      disk_size= "16G"
     }
 
   }
