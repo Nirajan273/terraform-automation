@@ -51,7 +51,7 @@ module "Cassandra_infra" {
     "Momonbitez_hisab" = {
       vmid      = 706, 
       memory    = 8192,
-      disk_size = "20G"
+      disk_size = "25G"
     }
 
 
