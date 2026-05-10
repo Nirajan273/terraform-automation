@@ -5,20 +5,6 @@ on:
     branches: [ main ]
     paths:
       - "live/**"
-  # Allows you to manually trigger an unlock from the GitHub Actions UI
-  workflow_dispatch:
-    inputs:
-      target_team:
-        description: 'Team to unlock (e.g., Nirajan, Alpha, Cassandra_infra)'
-        required: true
-      lock_id:
-        description: 'The Lock ID from the error message'
-        required: true
-
-# This prevents multiple pushes from stepping on each other's toes
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
 
 env:
   TF_VAR_proxmox_api_url: ${{ secrets.PM_API_URL }}
@@ -32,10 +18,10 @@ jobs:
   # --- JOB 1: THE PLAN ---
   plan:
     runs-on: self-hosted
-    if: github.event_name == 'push'
     strategy:
       fail-fast: false
       matrix:
+        # DEFINE YOUR TEAMS HERE
         include:
           - team_name: "Nirajan"
             path: "live/team-Nirajan"
@@ -46,6 +32,7 @@ jobs:
     
     name: "Plan: ${{ matrix.team_name }}"
     outputs:
+      # This maps the plan results so the Apply job knows if it should run
       should_apply: ${{ steps.check.outputs.changed }}
     
     steps:
@@ -56,19 +43,20 @@ jobs:
       - id: check
         name: Check for changes
         run: |
+          # Only proceed if files in this specific path changed in this push
           if git diff --quiet ${{ github.event.before }} ${{ github.event.after }} -- "${{ matrix.path }}"; then
             echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes in ${{ matrix.path }}"
           else
             echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in ${{ matrix.path }}"
           fi
 
       - name: Terraform Init & Plan
         if: steps.check.outputs.changed == 'true'
         working-directory: ${{ matrix.path }}
         run: |
-          # Clean local cache to prevent self-hosted runner pollution
-          rm -rf .terraform
-          terraform init -input=false
+          terraform init
           terraform plan -no-color -out=tfplan
 
       - name: Upload Plan
@@ -77,13 +65,11 @@ jobs:
         with:
           name: ${{ matrix.team_name }}-tfplan
           path: ${{ matrix.path }}/tfplan
-          retention-days: 1
 
   # --- JOB 2: THE APPLY (Requires Approval) ---
   apply:
     needs: plan
     runs-on: self-hosted
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     strategy:
       matrix:
         include:
@@ -95,7 +81,9 @@ jobs:
             path: "live/team-cassandra"
     
     name: "Apply: ${{ matrix.team_name }}"
-    environment: production
+    environment: production # <--- Manual Approval button appears here
+    # Only run if the Plan job detected changes for THIS specific matrix folder
+    if: github.ref == 'refs/heads/main'
     
     steps:
       - uses: actions/checkout@v4
@@ -105,38 +93,16 @@ jobs:
         with:
           name: ${{ matrix.team_name }}-tfplan
           path: ${{ matrix.path }}
+        # This step will fail gracefully if no plan was uploaded (no changes)
         continue-on-error: true 
 
       - name: Terraform Apply
+        # Only apply if the plan file actually exists
         run: |
           if [ -f "${{ matrix.path }}/tfplan" ]; then
             cd ${{ matrix.path }}
-            rm -rf .terraform
-            terraform init -input=false
+            terraform init
             terraform apply -auto-approve tfplan
           else
-            echo "No plan found for ${{ matrix.team_name }}."
+            echo "No plan file found for ${{ matrix.team_name }}. Skipping."
           fi
-
-  # --- JOB 3: EMERGENCY UNLOCK ---
-  # Use this via "Run Workflow" button in the Actions tab
-  force-unlock:
-    runs-on: self-hosted
-    if: github.event_name == 'workflow_dispatch'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Manual Force Unlock
-        run: |
-          # Resolve path based on team name input
-          case "${{ github.event.inputs.target_team }}" in
-            "Nirajan") PATH_DIR="live/team-Nirajan" ;;
-            "Alpha") PATH_DIR="live/team-alpha" ;;
-            "Cassandra_infra") PATH_DIR="live/team-cassandra" ;;
-            *) echo "Unknown team"; exit 1 ;;
-          esac
-
-          echo "Unlocking $PATH_DIR with ID ${{ github.event.inputs.lock_id }}"
-          cd $PATH_DIR
-          rm -rf .terraform
-          terraform init -input=false
-          terraform force-unlock -force ${{ github.event.inputs.lock_id }}
