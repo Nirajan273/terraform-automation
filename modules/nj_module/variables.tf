@@ -30,8 +30,7 @@ variable "admin_password" {
 
 variable "docker_image" {
   type        = string
-  default =
-  description = "The Docker image to deploy via Ansible"
+   description = "The Docker image to deploy via Ansible"
 }
 
 variable "memory_mb" {
