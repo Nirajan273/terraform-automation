@@ -27,14 +27,25 @@ provider "proxmox" {
 
 # The Module Call
 module "nirajan_infra" {
-  source = "../../modules/proxmox_vm"
+  source = "../../modules/nj_module"
 
-  team_name      = "nirajan"
-  vm_count       = 1
-  starting_vmid  = 500
-  docker_image   = "nginx:latest"
+  team_name      = "devops"
+  vms = {
+    "crm-kopu" = {
+      vmid  = 801,
+      memory    = 4192,
+      disk_size = "15G"
+    },
+
+    "ai-kopu" = {
+      vmid  = 802,
+      memory    = 4192,
+      disk_size = "15G"
+    }
+  }
   
   # These refer to variables we'll set in the .tfvars file
+  #docker_image = "cassandra.latest"
   admin_user     = var.proxmox_user 
   admin_password = var.proxmox_password
 }
