@@ -28,10 +28,11 @@ variable "admin_password" {
   sensitive = true
 }
 
-variable "docker_image" {
-  type        = string
-  description = "The Docker image to deploy via Ansible"
-}
+#variable "docker_image" {
+#  type        = string
+#  default =
+#  description = "The Docker image to deploy via Ansible"
+#}
 
 variable "memory_mb" {
   type    = number
