@@ -39,7 +39,7 @@ module "nirajan_infra" {
 
     "ai-kopu" = {
       vmid  = 802,
-      memory    = 4192,
+      memory    = 6192,
       disk_size = "30G"
     }
   }
