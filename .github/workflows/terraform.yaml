@@ -39,10 +39,10 @@ jobs:
         include:
           - team_name: "Nirajan"
             path: "live/team-Nirajan"
-          - team_name: "Alpha"
-            path: "live/team-alpha"
-          - team_name: "Cassandra_infra"
-            path: "live/team-cassandra"
+          # - team_name: "Alpha"
+          #   path: "live/team-alpha"
+          # - team_name: "Cassandra_infra"
+          #   path: "live/team-cassandra"
     
     name: "Plan: ${{ matrix.team_name }}"
     outputs:
@@ -92,10 +92,10 @@ jobs:
         include:
           - team_name: "Nirajan"
             path: "live/team-Nirajan"
-          - team_name: "Alpha"
-            path: "live/team-alpha"
-          - team_name: "Cassandra_infra"
-            path: "live/team-cassandra"
+          # - team_name: "Alpha"
+          #   path: "live/team-alpha"
+          # - team_name: "Cassandra_infra"
+          #   path: "live/team-cassandra"
     
     name: "Apply: ${{ matrix.team_name }}"
     environment: production
