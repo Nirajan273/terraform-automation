@@ -1,10 +1,5 @@
-terraform { 
-  cloud { 
-    
-    organization = "NJ" 
-
-    workspaces { 
-      name = "team-nirajan-proxmox" 
-    } 
-  } 
+terraform {
+  backend "local" {
+    path = "terraform.tfstate"
+  }
 }

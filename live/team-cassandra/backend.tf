@@ -1,10 +1,5 @@
-terraform { 
-  cloud { 
-    
-    organization = "NJ" 
-
-    workspaces { 
-      name = "Cassandra_infra" 
-    } 
-  } 
+terraform {
+  backend "local" {
+    path = "terraform.tfstate"
+  }
 }
