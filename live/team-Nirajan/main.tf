@@ -45,7 +45,7 @@ module "nirajan_infra" {
   }
   
   # These refer to variables we'll set in the .tfvars file
-  #docker_image = "cassandra.latest"
+  docker_image = "postgres.latest"
   admin_user     = var.proxmox_user 
   admin_password = var.proxmox_password
 }
