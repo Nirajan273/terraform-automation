@@ -34,7 +34,7 @@ module "nirajan_infra" {
     "crm-kopu" = {
       vmid  = 801,
       memory    = 4192,
-      disk_size = "30G"
+      disk_size = "25G"
     },
 
     "ai-kopu" = {
