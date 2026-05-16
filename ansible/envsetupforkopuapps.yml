@@ -7,6 +7,15 @@
     node_version: "22"
 
   tasks:
+    # --- PROXMOX BOOT SAFEGUARD ---
+    - name: Wait for automatic system updates to finish and release APT lock
+      ansible.builtin.shell: |
+        while fuser /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock >/dev/null 2>&1; do
+          echo "Waiting for APT lock release..."
+          sleep 5
+        done
+      changed_when: false
+
     - name: Ensure prerequisite packages are installed
       apt:
         name:
@@ -32,7 +41,7 @@
 
     - name: Add official Docker repository to APT sources
       apt_repository:
-        repo: "deb [arch={{ ansible_architecture if ansible_architecture != 'x86_64' else 'amd64' }} signed-by=/etc/apt/keyrings/docker.gpg] https://docker.com {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://docker.com {{ ansible_distribution_release }} stable"
         state: present
         filename: docker
 
