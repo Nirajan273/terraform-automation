@@ -45,7 +45,7 @@ variable "cpu_cores" {
 
 variable "disk_size" {
   type    = string
- # default = "15G"
+  default = "30G"
 }
 
 variable "vms" {
