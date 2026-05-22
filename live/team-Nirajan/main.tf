@@ -42,6 +42,14 @@ module "nirajan_infra" {
       memory    = 6192,
       disk_size = "30G"
     }
+
+    "boysunited" = {
+      vmid  = 803,
+      memory    = 1024,
+      disk_size = "30G"
+    }
+
+    
   }
   
   # These refer to variables we'll set in the .tfvars file
