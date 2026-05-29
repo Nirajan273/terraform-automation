@@ -48,6 +48,11 @@ module "nirajan_infra" {
       memory    = 1024,
       disk_size = "30G"
     }
+"nepsight-tech" = {
+      vmid  = 904,
+      memory    = 4024,
+      disk_size = "30G"
+    }
 
     
   }
